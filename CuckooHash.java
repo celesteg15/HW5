@@ -1,6 +1,6 @@
 /******************************************************************
  *
- *   YOUR NAME / SECTION NUMBER
+ *    [Celeste Gonzalez] / COMP 272 002
  *
  *   Note, additional comments provided throughout this source code
  *   is for educational purposes
@@ -245,15 +245,61 @@ public class CuckooHash<K, V> {
 	 */
 
  	public void put(K key, V value) {
-
-		// ADD YOUR CODE HERE - DO NOT FORGET TO ADD YOUR NAME AT TOP OF FILE.
-		// Also make sure you read this method's prologue above, it should help
-		// you. Especially the two HINTS in the prologue.
-
-		return;
+		K currentKey = key;
+		V currentValue = value;
+	
+		for (int i = 0; i < CAPACITY; i++) {
+			// Calculate primary position
+			int pos1 = hash1(currentKey);
+			
+			// Check if key-value pair already exists at pos1
+			if (table[pos1] != null && table[pos1].getBucKey().equals(currentKey) && table[pos1].getValue().equals(currentValue)) {
+				return;
+			}
+			
+			// Try to place in primary position
+			if (table[pos1] == null) {
+				table[pos1] = new Bucket<>(currentKey, currentValue);
+				return;
+			}
+	
+			// If pos1 is occupied, displace current item and move to secondary position
+			K displacedKey = table[pos1].getBucKey();
+			V displacedValue = table[pos1].getValue();
+			table[pos1] = new Bucket<>(currentKey, currentValue);
+			
+			currentKey = displacedKey;
+			currentValue = displacedValue;
+	
+			// Calculate secondary position
+			int pos2 = hash2(currentKey);
+	
+			// Check if key-value pair already exists at pos2
+			if (table[pos2] != null && table[pos2].getBucKey().equals(currentKey) && table[pos2].getValue().equals(currentValue)) {
+				return;
+			}
+			
+			// Try to place in secondary position
+			if (table[pos2] == null) {
+				table[pos2] = new Bucket<>(currentKey, currentValue);
+				return;
+			}
+	
+			// Swap positions and prepare for the next iteration
+			displacedKey = table[pos2].getBucKey();
+			displacedValue = table[pos2].getValue();
+			table[pos2] = new Bucket<>(currentKey, currentValue);
+			
+			currentKey = displacedKey;
+			currentValue = displacedValue;
+		}
+	
+		// If a cycle is detected, rehash and retry insertion
+		rehash();
+		put(key, value);  // Reinsert original key-value after rehashing
 	}
-
-
+	
+	
 	/**
 	 * Method get
 	 *
@@ -345,7 +391,7 @@ public class CuckooHash<K, V> {
 		CAPACITY = (CAPACITY * 2) + 1;
 		table = new Bucket[CAPACITY];
 
-		for (int i=0; i<OLD_CAPACITY; ++i) {
+		for (int i=0; i<OLD_CAPACITY; i++) {
 			if (tableCopy[i] != null) {
 				put(tableCopy[i].getBucKey(), tableCopy[i].getValue());
 			}
